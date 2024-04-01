@@ -16,6 +16,8 @@ import com.smallcloud.refactai.Resources.binPrefix
 import com.smallcloud.refactai.account.AccountManagerChangedNotifier
 import com.smallcloud.refactai.io.InferenceGlobalContextChangedNotifier
 import com.smallcloud.refactai.notifications.emitError
+import com.smallcloud.refactai.panes.sharedchat.events.SystemPrompt
+import com.smallcloud.refactai.panes.sharedchat.events.SystemPromptMap
 import com.smallcloud.refactai.settings.AppSettingsState
 import org.apache.hc.core5.concurrent.ComplexFuture
 import java.net.URI
@@ -221,6 +223,7 @@ class LSPProcessHolder: Disposable {
         private val BIN_PATH = Path(getTempDirectory(),
             ApplicationInfo.getInstance().build.toString().replace(Regex("[^A-Za-z0-9 ]"), "_") +
             "_refact_lsp${getExeSuffix()}").toString()
+        // here ?
         @JvmStatic
         val instance: LSPProcessHolder
             get() = ApplicationManager.getApplication().getService(LSPProcessHolder::class.java)
@@ -286,6 +289,21 @@ class LSPProcessHolder: Disposable {
             val body = it.get() as String
             Gson().fromJson(body, LSPCapabilities::class.java)
         }
+    }
+
+    fun fetchSystemPrompts(): Future<SystemPromptMap> {
+        val res = InferenceGlobalContext.connection.get(
+            url.resolve("/v1/customization"),
+            dataReceiveEnded = {},
+            errorDataReceived = {}
+        )
+        val json = res.thenApply {
+            val body = it.get() as String
+            val type: SystemPromptMap = HashMap<String, SystemPrompt>()
+            Gson().fromJson<SystemPromptMap>(body, type::class.java)
+        }
+
+        return json
     }
 
 
