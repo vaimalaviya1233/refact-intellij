@@ -273,4 +273,23 @@ class LSPProcessHolder: Disposable {
             return res
         }
     }
+
+    fun fetchCaps(): Future<LSPCapabilities> {
+
+         val res = InferenceGlobalContext.connection.get(
+            url.resolve("/v1/caps"),
+            dataReceiveEnded = {},
+            errorDataReceived = {}
+        )
+
+        return res.thenApply {
+            val body = it.get() as String
+            Gson().fromJson(body, LSPCapabilities::class.java)
+        }
+    }
+
+
+    // chat ?
+    // prompts?
+    // statistics?
 }
